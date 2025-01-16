@@ -52,7 +52,7 @@ export class ChatService {
     const sessionId = await this.getChatSessionId(parseInt(socket.data.userId));
     await this.openai.beta.threads.messages.create(sessionId, {
       role: 'user',
-      content: payload.getContent(),
+      content: payload.content,
     });
     const stream = this.openai.beta.threads.runs.stream(sessionId, {
       assistant_id: config.REDAI_ASSISTANT_ID,
@@ -60,9 +60,10 @@ export class ChatService {
     });
     for await (const chunk of stream) {
       if (chunk.event === 'thread.message.completed') {
-        const messageResponse = new MessageResponseDto(
-          (chunk.data.content[0] as TextContentBlock).text.value,
-        );
+        const messageResponse: MessageResponseDto = {
+          content: (chunk.data.content[0] as TextContentBlock).text.value,
+          role: 'assistant',
+        };
         socket.emit('message', messageResponse);
       } else if (chunk.event === 'thread.run.completed') {
         socket.emit('finish');
