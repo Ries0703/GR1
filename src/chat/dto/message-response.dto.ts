@@ -1,17 +1,17 @@
 export class MessageResponseDto {
   private readonly content: string;
-  private readonly role: 'user';
+  private readonly role: 'assistant';
 
   constructor(content: string) {
     this.content = content;
-    this.role = 'user';
+    this.role = 'assistant';
   }
 
   getContent(): string {
     return this.content;
   }
 
-  getRole(): 'user' {
+  getRole(): 'assistant' {
     return this.role;
   }
 }

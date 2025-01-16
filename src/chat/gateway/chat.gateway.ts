@@ -4,11 +4,10 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Socket } from 'socket.io';
 import { ChatService } from '../service/chat.service';
 import { MessageRequestDto } from '../dto/message-request.dto';
 
@@ -16,9 +15,7 @@ import { MessageRequestDto } from '../dto/message-request.dto';
 @WebSocketGateway({
   cors: '*',
 })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayDisconnect, OnGatewayConnection
-{
+export class ChatGateway implements OnGatewayDisconnect, OnGatewayConnection {
   private readonly logger = new Logger(ChatGateway.name);
 
   constructor(private readonly chatService: ChatService) {}
@@ -26,10 +23,6 @@ export class ChatGateway
   handleConnection(socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
     socket.data.userId = socket.handshake.query as { userId: string };
-  }
-
-  afterInit(server: Server) {
-    this.logger.log('Init');
   }
 
   handleDisconnect(socket: Socket) {
@@ -42,6 +35,11 @@ export class ChatGateway
     @MessageBody() payload: MessageRequestDto,
   ) {
     client.emit('typing');
-    return this.chatService.getChatCompletion(payload, client);
+    try {
+      return this.chatService.getChatCompletion(payload, client);
+    } catch (e) {
+      this.logger.log(e);
+      client.emit('error');
+    }
   }
 }
